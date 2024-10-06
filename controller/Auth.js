@@ -9,7 +9,7 @@ exports.signup=async(req,resp)=>
     console.log("HELLO");
     try
     {
-        const {name,email,password}=req.body;
+        const {name,email,password,role}=req.body;
 
         // check if user present
         const exisitnguser=await User.findOne({email});
@@ -21,21 +21,23 @@ exports.signup=async(req,resp)=>
             })
         }
         // HASH PASS
+        console.log(password);
         let hashpass;
         try
         {
-            hashpass=await bcrypt.hash(password,1);
+            hashpass=await bcrypt.hash(password,10);
+            console.log(hashpass);
         }
         catch(err)
         {
+            console.log(err);
             return resp.status(500).json({
                 success:false,
                 message:"ERROR IN HASHING PASS"
             })
         }
-
         const user=await User.create({
-            name,email,password:hashpass
+            name,email,password:hashpass,role
         })
         return resp.status(200).json({
             success:true,
@@ -75,13 +77,14 @@ exports.login=async(req,resp)=>
         {
             return resp.status(401).json({
                 success:false,
-                message:"USER NOT FOUND",
+                message:"USER NOT RESGISTERED",
             })
         }
         let payload=
         {
             email:user.email,
             id:user._id,
+            role:user.role,
         }
         if(await bcrypt.compare(password,user.password))
         {
@@ -92,7 +95,7 @@ exports.login=async(req,resp)=>
             user.password=undefined;
 
             const options={
-                expires:new Date(Date.now() +3*24*60*60*1000),
+                expires:new Date(Date.now() +1*60*1000*1000),
                 httpOnly:true,
             }
 
@@ -103,7 +106,6 @@ exports.login=async(req,resp)=>
                 message:"USER LOGGIN DONE"
             })
         }
-
     }
     catch(err)
     {
